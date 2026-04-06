@@ -1,0 +1,22 @@
+{
+	"name": "WebWeave",
+	"description": "Live browser-session graph using DSA concepts.",
+	"version": "1.0.0",
+	"manifest_version": 3,
+	"permissions": [
+		"tabs",
+		"storage",
+		"webNavigation"
+	],
+	"host_permissions": [
+		"<all_urls>"
+	],
+	"background": {
+		"service_worker": "background.js",
+		"type": "module"
+	},
+	"action": {
+		"default_title": "WebWeave",
+		"default_popup": "popup/popup.html"
+	}
+}

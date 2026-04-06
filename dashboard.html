@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WebWeave Dashboard</title>
+    <link rel="stylesheet" href="dashboard.css" />
+  </head>
+  <body>
+    <main class="page">
+      <header class="hero">
+        <div>
+          <h1>WebWeave Session Dashboard</h1>
+          <p>Large interactive graph of your live browsing session.</p>
+        </div>
+        <div class="hero-actions">
+          <button id="startSession">Start Session</button>
+          <button id="stopSession" class="ghost">Stop Session</button>
+        </div>
+      </header>
+
+      <section class="stats" id="stats"></section>
+
+      <section class="tools">
+        <div class="tool-row">
+          <label>
+            Visited URL suggestions
+            <input id="autocompleteInput" type="text" placeholder="Type any part like wikipedia or https://..." />
+          </label>
+          <ul id="suggestions"></ul>
+        </div>
+
+        <div class="tool-row path-row">
+          <input id="fromUrl" type="text" placeholder="From URL (start node)" />
+          <input id="toUrl" type="text" placeholder="To URL (destination node)" />
+          <button id="findPath">Find BFS Path</button>
+        </div>
+        <p class="helper">From URL is where the path starts. To URL is where the path should end.</p>
+        <p id="pathResult"></p>
+      </section>
+
+      <section class="graph-shell">
+        <svg id="graph" viewBox="0 0 1500 860" preserveAspectRatio="xMidYMid meet"></svg>
+      </section>
+
+      <footer class="footnote">Click any node to jump to the exact page.</footer>
+    </main>
+
+    <script src="popup/d3.v7.min.js"></script>
+    <script src="dashboard.js"></script>
+  </body>
+</html>

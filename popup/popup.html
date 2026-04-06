@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>WebWeave</title>
+		<link rel="stylesheet" href="popup.css" />
+	</head>
+	<body>
+		<main class="shell">
+			<header class="topbar">
+				<div>
+					<h1>WebWeave</h1>
+					<p>Open full dashboard for large graph view</p>
+				</div>
+				<div class="controls">
+					<button id="startSession">Start Session</button>
+					<button id="stopSession" class="ghost">Stop</button>
+				</div>
+			</header>
+
+			<section class="stats" id="stats"></section>
+
+			<section class="tools">
+				<p class="hint">Use the full-page website dashboard for interactive graph exploration.</p>
+				<button id="openDashboard">Open WebWeave Dashboard</button>
+			</section>
+		</main>
+
+		<script src="popup.js"></script>
+	</body>
+</html>
