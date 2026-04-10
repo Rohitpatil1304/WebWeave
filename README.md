@@ -32,8 +32,9 @@ graph TD
     API -->|Response: Nodes & Links| D3
     
 
-    %% Styling
-    style Browser_Environment fill:#f9f9f9,stroke:#4285F4,stroke-width:2px
-    style Backend_Infrastructure fill:#f9fff9,stroke:#6db33f,stroke-width:2px
-    style D3 fill:#ff9900,color:#fff
+
+%% Styling for Black and White
+style Browser_Environment fill:#ffffff,stroke:#000000,stroke-width:2px
+style Backend_Infrastructure fill:#ffffff,stroke:#000000,stroke-width:2px
+style D3 fill:#eeeeee,stroke:#000000,color:#000,stroke-width:2px
 ```
