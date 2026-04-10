@@ -9,7 +9,7 @@ graph TD
         CE -->|onCreated / onRemoved| SW
         
         subgraph Extension_UI ["Extension Popup/Sidepanel"]
-            D3[]
+            D3[D3.js]
         end
     end
 
