@@ -9,7 +9,7 @@ graph TD
         CE -->|onCreated / onRemoved| SW
         
         subgraph Extension_UI ["Extension Popup/Sidepanel"]
-            D3[D3.js]
+            D3[D3.js - Visual Feedback]
         end
     end
 
@@ -30,7 +30,7 @@ graph TD
     GE <--> DB
     GE -->|JSON Graph State| API
     API -->|Response: Nodes & Links| D3
-    D3 -.->|Visual Feedback| Extension_UI
+    
 
     %% Styling
     style Browser_Environment fill:#f9f9f9,stroke:#4285F4,stroke-width:2px
