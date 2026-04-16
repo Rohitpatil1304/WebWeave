@@ -107,34 +107,12 @@ button.ghost {
   align-items: end;
 }
 
-label {
-  font-weight: 600;
-}
-
 input {
   width: 100%;
   margin-top: 6px;
   border: 1px solid var(--line);
   border-radius: 9px;
   padding: 10px;
-}
-
-#suggestions {
-  margin: 2px 0 0;
-  padding-left: 18px;
-  max-height: 86px;
-  overflow-y: auto;
-  color: var(--muted);
-}
-
-.suggestion-item {
-  background: transparent;
-  color: var(--accent);
-  border: none;
-  padding: 2px 0;
-  text-align: left;
-  cursor: pointer;
-  font-weight: 600;
 }
 
 .helper {

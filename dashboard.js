@@ -1,16 +1,14 @@
 const statsEl = document.getElementById("stats");
 const startBtn = document.getElementById("startSession");
 const stopBtn = document.getElementById("stopSession");
-const autoInput = document.getElementById("autocompleteInput");
-const suggestionsEl = document.getElementById("suggestions");
 const fromUrlEl = document.getElementById("fromUrl");
 const toUrlEl = document.getElementById("toUrl");
+const urlSuggestionsEl = document.getElementById("urlSuggestions");
 const pathBtn = document.getElementById("findPath");
 const pathResultEl = document.getElementById("pathResult");
 
 let currentState = null;
 let highlightPathIds = new Set();
-let activePathInput = "from";
 
 const port = chrome.runtime.connect({ name: "webweave-popup" });
 port.onMessage.addListener((message) => {
@@ -50,6 +48,18 @@ function shorten(url) {
   return url.length > 55 ? `${url.slice(0, 52)}...` : url;
 }
 
+function getNodeLabel(node) {
+  if (!node) {
+    return "";
+  }
+
+  if (node.isPlaceholder) {
+    return node.label || "New Tab";
+  }
+
+  return shorten(node.url);
+}
+
 function renderGraph(snapshot) {
   const svg = d3.select("#graph");
   svg.selectAll("*").remove();
@@ -78,7 +88,7 @@ function renderGraph(snapshot) {
       .attr("text-anchor", "middle")
       .attr("fill", "#627068")
       .attr("font-size", 18)
-      .text("Start a session and browse pages to build your graph.");
+      .text("Start a session and open a new tab to initialize the graph.");
     return;
   }
 
@@ -119,12 +129,19 @@ function renderGraph(snapshot) {
     .enter()
     .append("circle")
     .attr("r", 11)
-    .attr("fill", (d) => (highlightPathIds.has(d.id) ? "#d25a3e" : "#127a5c"))
+    .attr("fill", (d) => {
+      if (d.isPlaceholder) {
+        return "#9fa8a3";
+      }
+      return highlightPathIds.has(d.id) ? "#d25a3e" : "#127a5c";
+    })
     .attr("stroke", "#ffffff")
     .attr("stroke-width", 1.5)
     .style("cursor", "pointer")
     .on("click", (_, d) => {
-      chrome.runtime.sendMessage({ type: "JUMP_TO_NODE", nodeId: d.id });
+      if (!d.isPlaceholder) {
+        chrome.runtime.sendMessage({ type: "JUMP_TO_NODE", nodeId: d.id });
+      }
     })
     .call(
       d3
@@ -149,7 +166,7 @@ function renderGraph(snapshot) {
         })
     );
 
-  node.append("title").text((d) => d.url);
+  node.append("title").text((d) => (d.isPlaceholder ? "New Tab" : d.url));
 
   const labels = svg
     .append("g")
@@ -157,7 +174,7 @@ function renderGraph(snapshot) {
     .data(nodes)
     .enter()
     .append("text")
-    .text((d) => shorten(d.url))
+    .text((d) => getNodeLabel(d))
     .attr("font-size", 11)
     .attr("fill", "#3d4d44")
     .attr("dx", 14)
@@ -180,6 +197,20 @@ function renderState(snapshot) {
   renderGraph(snapshot);
 }
 
+async function updateAutocompleteSuggestions(prefix) {
+  const query = prefix.trim();
+  if (!query) {
+    urlSuggestionsEl.innerHTML = "";
+    return;
+  }
+
+  const res = await chrome.runtime.sendMessage({ type: "AUTOCOMPLETE", prefix: query });
+  const items = (res && res.suggestions) || [];
+  urlSuggestionsEl.innerHTML = items
+    .map((s) => `<option value="${s.replace(/"/g, "&quot;")}"></option>`)
+    .join("");
+}
+
 startBtn.addEventListener("click", async () => {
   highlightPathIds = new Set();
   const res = await chrome.runtime.sendMessage({ type: "START_SESSION" });
@@ -197,52 +228,12 @@ stopBtn.addEventListener("click", async () => {
   }
 });
 
-autoInput.addEventListener("input", async () => {
-  const prefix = autoInput.value.trim();
-  if (!prefix) {
-    suggestionsEl.innerHTML = "";
-    return;
-  }
-
-  const res = await chrome.runtime.sendMessage({ type: "AUTOCOMPLETE", prefix });
-  const items = (res && res.suggestions) || [];
-  suggestionsEl.innerHTML = items
-    .map(
-      (s) =>
-        `<li><button class="suggestion-item" type="button" data-url="${encodeURIComponent(s)}">${s}</button></li>`
-    )
-    .join("");
+fromUrlEl.addEventListener("input", () => {
+  updateAutocompleteSuggestions(fromUrlEl.value);
 });
 
-fromUrlEl.addEventListener("focus", () => {
-  activePathInput = "from";
-});
-
-toUrlEl.addEventListener("focus", () => {
-  activePathInput = "to";
-});
-
-suggestionsEl.addEventListener("click", (event) => {
-  const target = event.target;
-  if (!(target instanceof HTMLElement)) {
-    return;
-  }
-
-  if (!target.classList.contains("suggestion-item")) {
-    return;
-  }
-
-  const encodedUrl = target.getAttribute("data-url");
-  if (!encodedUrl) {
-    return;
-  }
-
-  const selectedUrl = decodeURIComponent(encodedUrl);
-  if (activePathInput === "to") {
-    toUrlEl.value = selectedUrl;
-  } else {
-    fromUrlEl.value = selectedUrl;
-  }
+toUrlEl.addEventListener("input", () => {
+  updateAutocompleteSuggestions(toUrlEl.value);
 });
 
 pathBtn.addEventListener("click", async () => {

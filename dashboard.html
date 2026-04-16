@@ -22,19 +22,12 @@
       <section class="stats" id="stats"></section>
 
       <section class="tools">
-        <div class="tool-row">
-          <label>
-            Visited URL suggestions
-            <input id="autocompleteInput" type="text" placeholder="Type any part like wikipedia or https://..." />
-          </label>
-          <ul id="suggestions"></ul>
-        </div>
-
         <div class="tool-row path-row">
-          <input id="fromUrl" type="text" placeholder="From URL (start node)" />
-          <input id="toUrl" type="text" placeholder="To URL (destination node)" />
+          <input id="fromUrl" type="text" list="urlSuggestions" autocomplete="off" placeholder="From URL (start node)" />
+          <input id="toUrl" type="text" list="urlSuggestions" autocomplete="off" placeholder="To URL (destination node)" />
           <button id="findPath">Find BFS Path</button>
         </div>
+        <datalist id="urlSuggestions"></datalist>
         <p class="helper">From URL is where the path starts. To URL is where the path should end.</p>
         <p id="pathResult"></p>
       </section>

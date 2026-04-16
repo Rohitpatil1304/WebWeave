@@ -18,6 +18,7 @@ const state = {
 	tabParent: new Map(),
 	tabChildren: new Map(),
 	tabBackStack: new Map(),
+	tabPendingClicks: new Map(),
 	urlIndex: new Map(),
 	trie: new Trie(),
 	lru: new LRUCache(500),
@@ -34,6 +35,7 @@ function resetSession() {
 	state.tabParent = new Map();
 	state.tabChildren = new Map();
 	state.tabBackStack = new Map();
+	state.tabPendingClicks = new Map();
 	state.urlIndex = new Map();
 	state.trie = new Trie();
 	state.lru = new LRUCache(500);
@@ -46,6 +48,128 @@ function ensureTab(tabId) {
 	if (!state.tabBackStack.has(tabId)) {
 		state.tabBackStack.set(tabId, new Stack());
 	}
+	if (!state.tabPendingClicks.has(tabId)) {
+		state.tabPendingClicks.set(tabId, null);
+	}
+}
+
+function setPendingClick(tabId, nodeId) {
+	ensureTab(tabId);
+	state.tabPendingClicks.set(tabId, nodeId);
+}
+
+function clearPendingClick(tabId) {
+	if (state.tabPendingClicks.has(tabId)) {
+		state.tabPendingClicks.set(tabId, null);
+	}
+}
+
+function getTabPlaceholderNode(tabId) {
+	const list = state.tabLists.get(tabId);
+	if (!list || !list.tail) {
+		return null;
+	}
+
+	const node = list.tail.data;
+	return node && node.isPlaceholder ? node : null;
+}
+
+function createEmptyTabNode(tabId) {
+	ensureTab(tabId);
+
+	const list = state.tabLists.get(tabId);
+	if (list.length > 0) {
+		return;
+	}
+
+	const node = {
+		id: state.nextNodeId++,
+		tabId,
+		url: "",
+		label: "New Tab",
+		isPlaceholder: true,
+		visitedAt: Date.now()
+	};
+
+	list.append(node);
+	state.nodes.push(node);
+	state.tabBackStack.get(tabId).push(node.id);
+	setPendingClick(tabId, node.id);
+	broadcastState();
+}
+
+function createClickNode(tabId, url, meta = {}) {
+	if (!state.sessionActive || !url) {
+		return null;
+	}
+
+	const isInternalPage = url.startsWith("chrome://") &&
+		!url.startsWith("chrome://newtab");
+	if (isInternalPage) {
+		return null;
+	}
+
+	ensureTab(tabId);
+
+	const list = state.tabLists.get(tabId);
+	const previous = list.tail ? list.tail.data : null;
+	const pendingNode = previous && previous.isPlaceholder && !previous.url ? previous : null;
+	if (pendingNode) {
+		return updatePendingNode(pendingNode, url, meta);
+	}
+
+	const node = {
+		id: state.nextNodeId++,
+		tabId,
+		url,
+		title: meta.title || url,
+		visitedAt: Date.now(),
+		clickType: meta.clickType || "link",
+		isPlaceholder: false
+	};
+
+	list.append(node);
+	state.nodes.push(node);
+	state.tabBackStack.get(tabId).push(node.id);
+	setPendingClick(tabId, node.id);
+
+	if (previous) {
+		state.edges.push({ from: previous.id, to: node.id, type: "clicked-link" });
+	}
+
+	if (!state.urlIndex.has(url)) {
+		state.urlIndex.set(url, []);
+	}
+	state.urlIndex.get(url).push(node.id);
+	state.trie.insert(url);
+	state.lru.put(url, { lastVisited: node.visitedAt, tabId });
+	broadcastState();
+	return node;
+}
+
+function updatePendingNode(node, url, meta = {}) {
+	const wasBlank = !node.url;
+	const previousUrl = node.url;
+	node.url = url;
+	node.title = meta.title || node.title || url;
+	node.isPlaceholder = false;
+	node.visitedAt = Date.now();
+	node.clickType = meta.clickType || node.clickType || "link";
+
+	if (!previousUrl || previousUrl !== url) {
+		if (!state.urlIndex.has(url)) {
+			state.urlIndex.set(url, []);
+		}
+		state.urlIndex.get(url).push(node.id);
+		state.trie.insert(url);
+		state.lru.put(url, { lastVisited: node.visitedAt, tabId: node.tabId });
+	}
+
+	if (wasBlank) {
+		broadcastState();
+	}
+
+	return node;
 }
 
 function addNodeForNavigation(tabId, url) {
@@ -61,11 +185,30 @@ function addNodeForNavigation(tabId, url) {
 
 	ensureTab(tabId);
 	const list = state.tabLists.get(tabId);
+	const placeholder = getTabPlaceholderNode(tabId);
+	if (placeholder && (!placeholder.url || placeholder.url === url)) {
+		updatePendingNode(placeholder, url, { clickType: "link" });
+		clearPendingClick(tabId);
+		broadcastState();
+		return;
+	}
+
+	const pendingId = state.tabPendingClicks.get(tabId);
+	if (pendingId) {
+		const pendingNode = state.nodes.find((n) => n.id === pendingId);
+		if (pendingNode && (!pendingNode.url || pendingNode.url === url)) {
+			updatePendingNode(pendingNode, url, { clickType: "link" });
+			clearPendingClick(tabId);
+			broadcastState();
+			return;
+		}
+	}
 
 	const node = {
 		id: state.nextNodeId++,
 		tabId,
 		url,
+		title: url,
 		visitedAt: Date.now()
 	};
 
@@ -73,6 +216,7 @@ function addNodeForNavigation(tabId, url) {
 	list.append(node);
 	state.nodes.push(node);
 	state.tabBackStack.get(tabId).push(node.id);
+	clearPendingClick(tabId);
 
 	if (previous) {
 		state.edges.push({ from: previous.id, to: node.id, type: "same-tab" });
@@ -173,7 +317,12 @@ function getAutocompleteSuggestions(prefix, limit = 8) {
 	for (const knownUrl of state.urlIndex.keys()) {
 		const knownLower = knownUrl.toLowerCase();
 		const knownNoProto = knownLower.replace(/^https?:\/\//, "");
-		if (knownLower.startsWith(query) || knownNoProto.startsWith(queryNoProto)) {
+		if (
+			knownLower.startsWith(query) ||
+			knownNoProto.startsWith(queryNoProto) ||
+			knownLower.includes(query) ||
+			knownNoProto.includes(queryNoProto)
+		) {
 			add(knownUrl);
 		}
 		if (out.length >= limit) {
@@ -251,13 +400,39 @@ chrome.runtime.onConnect.addListener((port) => {
 	});
 });
 
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+	if (!message || !message.type) {
+		return;
+	}
+
+	if (message.type === "LINK_CLICKED") {
+		const tabId = sender?.tab?.id;
+		if (typeof tabId !== "number") {
+			sendResponse({ ok: false, error: "Missing tab context." });
+			return;
+		}
+
+		if (!state.sessionActive) {
+			sendResponse({ ok: false, error: "Session is not active." });
+			return;
+		}
+
+		const node = createClickNode(tabId, message.url, {
+			title: message.title,
+			clickType: message.target === "_blank" || message.modifierKeys?.ctrlKey || message.modifierKeys?.metaKey ? "new-tab" : "link"
+		});
+		sendResponse({ ok: Boolean(node), nodeId: node?.id || null });
+		return;
+	}
+});
+
 chrome.tabs.onCreated.addListener((tab) => {
 	if (!state.sessionActive) {
 		return;
 	}
 
 	registerTabBranch(tab.id, tab.openerTabId);
-	broadcastState();
+	createEmptyTabNode(tab.id);
 });
 
 chrome.tabs.onRemoved.addListener((tabId) => {
@@ -266,6 +441,9 @@ chrome.tabs.onRemoved.addListener((tabId) => {
 	}
 	if (state.tabBackStack.has(tabId)) {
 		state.tabBackStack.delete(tabId);
+	}
+	if (state.tabPendingClicks.has(tabId)) {
+		state.tabPendingClicks.delete(tabId);
 	}
 });
 

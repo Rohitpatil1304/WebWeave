@@ -1,0 +1,263 @@
+PSEUDOCODE FOR DSA FILES
+
+1. dsa/dsa.js
+
+Algorithm 1: Create a doubly linked list node
+Input: data
+Output: node
+1. Set node data to data.
+2. Set node previous pointer to null.
+3. Set node next pointer to null.
+4. Return the node.
+
+Algorithm 2: Append a node to the doubly linked list
+Input: list, data
+Output: appended node
+1. Create a new node.
+2. If the list is empty, set head and tail to the new node.
+3. Otherwise, link the new node after the current tail and update tail.
+4. Increase list length.
+5. Return the new node.
+
+Algorithm 3: Convert list to array
+Input: list
+Output: array of values
+1. Create an empty array.
+2. Start from the head node.
+3. While the current node exists, add its data to the array and move forward.
+4. Return the array.
+
+Algorithm 4: Push an item onto the stack
+Input: stack, item
+Output: none
+1. Add the item to the top of the stack.
+
+Algorithm 5: Pop an item from the stack
+Input: stack
+Output: top item or null
+1. If the stack is empty, return null.
+2. Remove and return the last item.
+
+Algorithm 6: Peek at the stack
+Input: stack
+Output: top item or null
+1. If the stack is empty, return null.
+2. Return the last item without removing it.
+
+Algorithm 7: Insert a word into the trie
+Input: trie, word
+Output: none
+1. If the word is empty, stop.
+2. Start at the root node.
+3. For each lowercase character in the word, create a child node if needed and move to it.
+4. Mark the last node as the end of a word.
+
+Algorithm 8: Autocomplete a prefix in the trie
+Input: trie, prefix, limit
+Output: list of suggestions
+1. Normalize the prefix to lowercase.
+2. Follow the prefix from the root node.
+3. If any character is missing, return an empty list.
+4. Perform DFS from the matched node and collect words until the limit is reached.
+5. Return the collected words.
+
+Algorithm 9: Build adjacency list
+Input: edges
+Output: adjacency map
+1. Create an empty map.
+2. For each edge, add the destination node to the source list.
+3. Return the map.
+
+Algorithm 10: Find a BFS path
+Input: start, goal, edges
+Output: path
+1. If start equals goal, return a single-node path.
+2. Build the adjacency list.
+3. Initialize a queue with start, a visited set, and a parent map.
+4. While the queue is not empty, remove a node and inspect its neighbors.
+5. For each unvisited neighbor, store its parent and check whether it is the goal.
+6. If the goal is found, rebuild the path by following parents backward and return it.
+7. If no path exists, return an empty list.
+
+Algorithm 11: Traverse a tab tree in DFS order
+Input: rootTabId, childMap
+Output: ordered list of tab ids
+1. Create an empty output list.
+2. Visit the root tab.
+3. Record the current tab and depth.
+4. Recursively visit each child with depth + 1.
+5. Return the output list.
+
+2. java/src/com/webweave/dsa/DoublyLinkedList.java
+
+Algorithm 1: Create a linked-list node
+Input: value
+Output: node
+1. Store the value in the node.
+2. Set previous pointer to null.
+3. Set next pointer to null.
+
+Algorithm 2: Append a value to the list
+Input: list, value
+Output: none
+1. Create a new node.
+2. If the list is empty, assign the node to both head and tail.
+3. Otherwise, link it after the tail and update tail.
+4. Increase size.
+
+Algorithm 3: Get the last value
+Input: list
+Output: last value or null
+1. If tail is null, return null.
+2. Return the value stored at the tail.
+
+Algorithm 4: Convert list to a Java list
+Input: list
+Output: ordered values
+1. Create an empty list.
+2. Start from head and move through each node.
+3. Add each node value to the output list.
+4. Return the output list.
+
+3. java/src/com/webweave/dsa/GraphAlgorithms.java
+
+Algorithm 1: Find shortest path with BFS
+Input: start, goal, edges
+Output: path of node ids
+1. If start equals goal, return a one-element list.
+2. Build an adjacency list from the edge list.
+3. Initialize queue, visited set, and parent map.
+4. Repeatedly remove nodes from the queue and inspect each neighbor.
+5. Mark unvisited neighbors, store parent links, and enqueue them.
+6. When the goal is found, reconstruct the path from goal to start.
+7. If the goal is never reached, return an empty list.
+
+Algorithm 2: Produce DFS order for a tree
+Input: root, tree
+Output: traversal order
+1. Create an empty output list.
+2. Visit the root node.
+3. Add the node to the output list.
+4. Recursively visit all children in order.
+5. Return the output list.
+
+Algorithm 3: Reconstruct a BFS path
+Input: parent map, start, goal
+Output: path
+1. Start with the goal node.
+2. Follow parent links backward until no parent remains.
+3. Reverse the collected nodes.
+4. If the first node is not the start node, return an empty list.
+5. Otherwise return the path.
+
+4. java/src/com/webweave/dsa/LRUCache.java
+
+Algorithm 1: Create an LRU cache
+Input: capacity
+Output: cache
+1. Create an ordered map that tracks access order.
+2. Store the capacity.
+
+Algorithm 2: Remove the eldest entry
+Input: eldest entry
+Output: true or false
+1. If the cache size is greater than the capacity, remove the oldest entry.
+2. Otherwise keep the entry.
+
+5. java/src/com/webweave/dsa/StackDS.java
+
+Algorithm 1: Push onto stack
+Input: stack, value
+Output: none
+1. Push the value onto the stack.
+
+Algorithm 2: Pop from stack
+Input: stack
+Output: top value or null
+1. If the stack is empty, return null.
+2. Remove and return the top value.
+
+Algorithm 3: Peek stack
+Input: stack
+Output: top value or null
+1. If the stack is empty, return null.
+2. Return the top value without removing it.
+
+6. java/src/com/webweave/dsa/Trie.java
+
+Algorithm 1: Create a trie node
+Input: none
+Output: trie node
+1. Create an empty map of children.
+2. Set end-of-word flag to false.
+
+Algorithm 2: Insert a word into the trie
+Input: word
+Output: none
+1. If the word is null or blank, stop.
+2. Start from the root node.
+3. For each lowercase character, create the child node if it does not exist.
+4. Move to the child node.
+5. Mark the final node as the end of a word.
+
+Algorithm 3: Autocomplete a prefix
+Input: prefix, limit
+Output: list of words
+1. If the prefix is null, return an empty list.
+2. Normalize the prefix to lowercase.
+3. Traverse the trie using the prefix characters.
+4. If any character is missing, return an empty list.
+5. Run DFS from the matched node and collect results until the limit is reached.
+6. Return the collected words.
+
+Algorithm 4: DFS helper for trie
+Input: node, path, output, limit
+Output: none
+1. If the output size reaches the limit, stop.
+2. If the node marks the end of a word, add the current path.
+3. Recursively visit every child using the updated path.
+
+7. java/src/com/webweave/dsa/WebWeaveSession.java
+
+Algorithm 1: Create a visit node
+Input: id, tabId, url
+Output: visit node
+1. Store the visit id.
+2. Store the tab id.
+3. Store the URL.
+
+Algorithm 2: Record a visit
+Input: tabId, url
+Output: visit node
+1. Create tab-specific structures if they do not exist.
+2. Read the previous visit for the tab.
+3. Create a new visit node with the next available id.
+4. Append the visit to the tab list and push its id to the back stack.
+5. If a previous visit exists, add an edge from the previous visit to the new visit.
+6. Add the visit id to the URL index.
+7. Insert the URL into the trie and store it in the LRU cache.
+8. Return the new visit node.
+
+Algorithm 3: Add a tab branch
+Input: parentTabId, childTabId
+Output: none
+1. Add the child tab id under the parent tab id in the tree map.
+
+Algorithm 4: Find a path between two URLs
+Input: fromUrl, toUrl
+Output: path of visit ids
+1. Get the latest visit id for each URL.
+2. If either URL has no recorded visit, return an empty list.
+3. Use BFS over the recorded visit edges.
+4. Return the path of visit ids.
+
+Algorithm 5: Suggest URLs
+Input: prefix
+Output: list of suggestions
+1. Return up to eight trie autocomplete matches.
+
+Algorithm 6: Traverse the tab tree
+Input: rootTabId
+Output: DFS order
+1. Run DFS on the tab tree from the root tab id.
+2. Return the traversal order.
