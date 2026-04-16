@@ -28,7 +28,6 @@ body {
 
 .topbar {
 	display: flex;
-	justify-content: space-between;
 	align-items: flex-start;
 	gap: 12px;
 }
@@ -78,6 +77,7 @@ body {
 .controls {
 	display: flex;
 	gap: 8px;
+	margin-top: 4px;
 }
 
 button {
