@@ -76,7 +76,7 @@ function renderGraph(snapshot) {
       .attr("x", width / 2)
       .attr("y", height / 2)
       .attr("text-anchor", "middle")
-      .attr("fill", "#627068")
+      .attr("fill", "#666666")
       .attr("font-size", 18)
       .text("Start a session and browse pages to build your graph.");
     return;
@@ -110,7 +110,7 @@ function renderGraph(snapshot) {
     .enter()
     .append("line")
     .attr("stroke-width", (d) => (pathEdges.has(linkKey(d)) ? 4 : 2))
-    .attr("stroke", (d) => (pathEdges.has(linkKey(d)) ? "#d25a3e" : "#8ea197"));
+    .attr("stroke", (d) => (pathEdges.has(linkKey(d)) ? "#111111" : "#a0a0a0"));
 
   const node = svg
     .append("g")
@@ -119,7 +119,7 @@ function renderGraph(snapshot) {
     .enter()
     .append("circle")
     .attr("r", 11)
-    .attr("fill", (d) => (highlightPathIds.has(d.id) ? "#d25a3e" : "#127a5c"))
+    .attr("fill", (d) => (highlightPathIds.has(d.id) ? "#111111" : "#5f5f5f"))
     .attr("stroke", "#ffffff")
     .attr("stroke-width", 1.5)
     .style("cursor", "pointer")
@@ -159,7 +159,7 @@ function renderGraph(snapshot) {
     .append("text")
     .text((d) => shorten(d.url))
     .attr("font-size", 11)
-    .attr("fill", "#3d4d44")
+    .attr("fill", "#444444")
     .attr("dx", 14)
     .attr("dy", 4);
 
