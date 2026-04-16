@@ -1,110 +1,168 @@
 # WebWeave Project Overview
 
-WebWeave is a Chrome extension that records a live browsing session and turns it into an interactive graph. The project is built to demonstrate data structures and algorithms in a practical browser tool, combining tab history tracking, autocomplete, graph search, and session visualization.
+WebWeave is a Chrome extension that records browsing activity and converts it into a live, interactive graph. It is designed as a data structures and algorithms project, but it also behaves like a real product: you can start a session, browse normally, and inspect the resulting navigation graph in the dashboard.
 
-## What The Project Does
+## Short Presentation Summary
 
-The extension watches page navigations during an active session and builds a session graph made of nodes and edges. Each node represents a visited page, while each edge represents a navigation step, usually from one page to the next in the same tab. The dashboard then renders that session as a D3 force-directed graph so the browsing flow becomes easy to inspect.
+The easiest way to describe WebWeave is this: it watches how the user moves through tabs and pages, stores that journey as graph data, and then visualizes it. New tabs appear immediately in the graph, link clicks are tracked as soon as they happen, and the dashboard lets the user search URLs, find a path between two points, and jump back to the exact page.
 
-The project has two primary user-facing surfaces:
+## End-To-End Workflow
 
-- The popup, which provides quick session controls and summary stats.
-- The dashboard, which provides the full graph view, autocomplete, path search, and node-to-page jumping.
-
-## Project Structure
-
-- [manifest.json](manifest.json) defines the Chrome extension, permissions, background service worker, and popup entry point.
-- [background.js](background.js) stores session state, listens to browser events, and answers messages from the UI.
-- [popup/popup.html](popup/popup.html), [popup/popup.js](popup/popup.js), and [popup/popup.css](popup/popup.css) implement the compact popup UI.
-- [dashboard.html](dashboard.html), [dashboard.js](dashboard.js), and [dashboard.css](dashboard.css) implement the full-page graph dashboard.
-- [dsa/dsa.js](dsa/dsa.js) contains the JavaScript data structures and algorithms used by the extension.
-- [java/src/com/webweave/dsa/](java/src/com/webweave/dsa/) contains Java versions of the same data structures and algorithms for reference.
-
-## Extension Architecture
-
-The extension uses Manifest V3 with a service worker background script. The background layer is the central source of truth for the session. It tracks nodes, edges, tab relationships, autocomplete data, and a lightweight cache. The popup and dashboard connect to the background script using `chrome.runtime.connect` and `chrome.runtime.sendMessage`, which keeps both UIs in sync with the current session state.
-
-The main workflow is:
+The project works in a clear pipeline:
 
 1. The user starts a session from the popup or dashboard.
-2. The background script begins recording navigation events.
-3. Each committed main-frame navigation becomes a node in the session graph.
-4. Consecutive pages in the same tab create edges.
-5. The dashboard receives live state updates and redraws the graph.
+2. The background service worker clears old state and begins listening to browser events.
+3. When the user opens a new tab, WebWeave creates a placeholder node right away so the graph already shows the tab.
+4. When the user clicks a link, the content script captures that click and sends the destination URL to the background script.
+5. The background script creates a node for that click and links it to the previous page in the same tab.
+6. When the browser navigation actually commits, the background script reuses the pending node instead of duplicating it.
+7. The dashboard receives the updated session snapshot and redraws the D3 graph.
+8. The user can then type From and To URLs, choose suggestions from the graph, and run BFS to highlight the path.
 
-## Background Logic
+That workflow is what makes the project feel live instead of static. It does not wait for manual imports or offline processing; it updates in real time as the browser changes.
 
-The background script is responsible for the actual session model. It keeps the following state:
+## Main Components
 
-- `nodes`: all recorded visits.
-- `edges`: navigation connections between visits.
-- `tabLists`: per-tab linked lists of visits.
-- `tabBackStack`: per-tab back stacks.
-- `tabParent` and `tabChildren`: a tab tree based on opener relationships.
-- `urlIndex`: a map from URL to the visit node IDs that used it.
-- `trie`: URL prefix autocomplete.
-- `lru`: a cache of recently visited URLs.
+- [manifest.json](manifest.json) defines the extension, permissions, content script, background service worker, and popup entry point.
+- [background.js](background.js) is the central state manager. It stores nodes, edges, tab relationships, autocomplete data, and path search logic.
+- [content.js](content.js) captures link clicks from pages and reports them to the background script.
+- [popup/popup.html](popup/popup.html), [popup/popup.js](popup/popup.js), and [popup/popup.css](popup/popup.css) implement the compact control panel.
+- [dashboard.html](dashboard.html), [dashboard.js](dashboard.js), and [dashboard.css](dashboard.css) implement the full visualization and path search interface.
+- [dsa/dsa.js](dsa/dsa.js) contains the JavaScript implementations of the core data structures and graph algorithms.
+- [java/src/com/webweave/dsa/](java/src/com/webweave/dsa/) contains equivalent Java implementations for reference and presentation.
 
-It listens to browser events such as `chrome.webNavigation.onCommitted`, `chrome.tabs.onCreated`, and `chrome.tabs.onRemoved`. When a tab is created, the script seeds an empty placeholder node so the graph initializes immediately. When a navigation is recorded, the script creates or extends the tab flow, links it to the previous visit in the same tab, indexes the URL, and broadcasts the updated snapshot to connected UIs.
+## How The Implementation Works
 
-The background script also supports the main UI actions:
+### 1. Session State In The Background Script
 
-- Start and stop a session.
-- Fetch the current state.
-- Return autocomplete suggestions.
-- Find a shortest path between two visited URLs.
-- Jump back to a recorded node by opening or focusing the corresponding tab and URL.
+The background script is the single source of truth. It keeps all session data in memory, including:
 
-## Popup UI
+- `nodes`: every page visit and placeholder tab node.
+- `edges`: the connections between visits.
+- `tabLists`: ordered visit history per tab.
+- `tabBackStack`: a stack of visit IDs per tab.
+- `tabParent` and `tabChildren`: a tree of tab opening relationships.
+- `urlIndex`: a lookup from URL to visit IDs.
+- `trie`: autocomplete storage for previously visited URLs.
+- `lru`: a small recent-URL cache.
+- `tabPendingClicks`: a temporary map used to merge click events with later navigation commits.
 
-The popup is the light-weight control panel. It shows the current session status, node count, edge count, and start time. It also provides buttons to start and stop the session and a shortcut to open the full dashboard.
+This makes the background script responsible for both tracking and query handling.
 
-This screen is intentionally simple. Its job is to make session control fast without requiring the full dashboard to be open.
+### 2. New Tab Initialization
 
-## Dashboard UI
+When a new tab opens during an active session, the background script creates an empty placeholder node immediately. This is why the graph can show a new tab before any website loads. It helps the user understand that a tab exists even if it is still blank.
 
-The dashboard is the main visualization layer. It combines session controls, autocomplete, path search, and the rendered graph into a single page.
+### 3. Link Click Tracking
 
-Key dashboard features:
+The content script listens for click events on anchors. When the user clicks a link, it sends the clicked URL, title, target, and modifier-key information to the background script. This means the project can record link activity at click time, not only after navigation completes.
 
-- A live stats panel for session state.
-- A URL autocomplete input that suggests previously visited pages.
-- A path search form that finds a BFS path between two URLs.
-- A force-directed D3 graph that displays the browsing session.
-- Clickable nodes that jump to the exact page in the browser.
+The background script then creates a node for that click and stores it as a pending visit. When the browser later reports the committed navigation for the same tab, the script checks whether the visit already exists and updates that node instead of adding a duplicate.
 
-The graph uses different colors to distinguish regular nodes from highlighted path nodes. Users can drag nodes to inspect the structure more comfortably, and the view updates whenever the session state changes.
+This is the key reason the graph stays accurate while still responding quickly.
+
+### 4. URL Indexing And Suggestions
+
+Every recorded URL is inserted into the trie and into the URL index. That supports autocomplete in the dashboard. The current UI uses From and To fields only, and both fields share the same URL suggestion source.
+
+Autocomplete is intentionally flexible:
+
+- It matches URL prefixes.
+- It also matches word fragments inside the URL.
+- It ignores the `http://` and `https://` difference when searching.
+
+That is why typing a word like `leetcode` or even a partial URL still gives meaningful suggestions.
+
+### 5. Path Search
+
+After the user chooses a From URL and a To URL, the background script finds the latest recorded node for each one. It then runs BFS over the session edges to find the shortest path between them.
+
+The dashboard receives the resulting node ID list and highlights the path in the graph. This is useful when presenting the project because it shows a real algorithm solving a real navigation question: how did the user get from one page to another in the session?
+
+### 6. Graph Rendering
+
+The dashboard renders the session as a D3 force-directed graph.
+
+- Nodes represent visits.
+- Edges represent transitions.
+- Placeholder nodes represent newly opened tabs.
+- Highlighted nodes and edges show the BFS path.
+
+The force simulation keeps the graph readable by spreading nodes apart, and drag behavior lets the user manually inspect a cluster.
+
+## Detailed Module Breakdown
+
+### Background Script
+
+The background script listens to:
+
+- `chrome.tabs.onCreated` to register new tabs.
+- `chrome.tabs.onRemoved` to clean tab state.
+- `chrome.webNavigation.onCommitted` to record real page loads.
+- `chrome.runtime.onMessage` to handle start, stop, autocomplete, path search, and node jump actions.
+- `chrome.runtime.onConnect` to broadcast live state updates to the UI.
+
+That gives it full control over the session lifecycle.
+
+### Popup UI
+
+The popup is the quick control surface. It is used to start or stop the session and to open the dashboard. It also shows lightweight stats such as session status, node count, edge count, and session start time.
+
+### Dashboard UI
+
+The dashboard is where the presentation lives.
+
+- The top area shows live session stats.
+- The path area lets the user type From and To URLs.
+- The browser suggestions come from the graph itself.
+- The graph area shows the live navigation network.
+- Clicking a non-placeholder node jumps back to that exact page.
 
 ## Data Structures And Algorithms
 
-The project is explicitly built around DSA concepts, and the JavaScript implementation mirrors the Java reference code.
+The project is intentionally built around DSA concepts.
 
-- [dsa/dsa.js](dsa/dsa.js) implements a doubly linked list, stack, trie, LRU cache, BFS shortest path, and DFS tree traversal.
-- [java/src/com/webweave/dsa/DoublyLinkedList.java](java/src/com/webweave/dsa/DoublyLinkedList.java), [java/src/com/webweave/dsa/StackDS.java](java/src/com/webweave/dsa/StackDS.java), [java/src/com/webweave/dsa/Trie.java](java/src/com/webweave/dsa/Trie.java), [java/src/com/webweave/dsa/LRUCache.java](java/src/com/webweave/dsa/LRUCache.java), and [java/src/com/webweave/dsa/GraphAlgorithms.java](java/src/com/webweave/dsa/GraphAlgorithms.java) provide the Java counterparts.
-- [java/src/com/webweave/dsa/WebWeaveSession.java](java/src/com/webweave/dsa/WebWeaveSession.java) ties those pieces together into a session model similar to the extension.
+- [dsa/dsa.js](dsa/dsa.js) implements a doubly linked list, stack, trie, LRU cache, BFS path search, and DFS tree traversal.
+- [java/src/com/webweave/dsa/DoublyLinkedList.java](java/src/com/webweave/dsa/DoublyLinkedList.java), [java/src/com/webweave/dsa/StackDS.java](java/src/com/webweave/dsa/StackDS.java), [java/src/com/webweave/dsa/Trie.java](java/src/com/webweave/dsa/Trie.java), [java/src/com/webweave/dsa/LRUCache.java](java/src/com/webweave/dsa/LRUCache.java), and [java/src/com/webweave/dsa/GraphAlgorithms.java](java/src/com/webweave/dsa/GraphAlgorithms.java) mirror the JavaScript logic.
+- [java/src/com/webweave/dsa/WebWeaveSession.java](java/src/com/webweave/dsa/WebWeaveSession.java) combines the structures into a Java session model.
 
-How the structures are used:
+What each one does:
 
-- The doubly linked list stores the ordered visit history for each tab.
-- The stack keeps a back-navigation history per tab.
-- The trie powers URL autocomplete.
-- The LRU cache tracks recently visited URLs efficiently.
-- BFS finds the shortest navigation path between two pages.
-- DFS traverses the tab tree from root tabs to child tabs.
+- The doubly linked list stores the ordered history for each tab.
+- The stack supports back-navigation style tracking.
+- The trie provides fast URL suggestion lookup.
+- The LRU cache remembers recently used URLs.
+- BFS finds the shortest path through the session graph.
+- DFS walks the tree of tabs opened from other tabs.
 
-## Design Notes
+## Why The Project Is Good For Presentation
 
-The UI uses a clean green-and-cream visual style with soft gradients and rounded cards. The dashboard is built for broad screens, while the popup is compressed for quick access. The project also uses a large SVG canvas and a D3 force simulation to make the graph readable when the session grows.
+WebWeave is easy to present because it connects theory and practice:
+
+- The browser interaction is easy to understand.
+- The graph visualization is immediately visible.
+- The algorithms are simple to explain and map directly to features.
+- The Java and JavaScript implementations show the same concepts in two languages.
+
+If you are demoing it live, the best sequence is:
+
+1. Start a session.
+2. Open a new tab.
+3. Click a few links on different pages.
+4. Show the graph updating.
+5. Use From and To suggestions.
+6. Run BFS and highlight the path.
+7. Click a node to jump back to the page.
 
 ## Limitations
 
-The project is useful as a live visualization tool, but it still has a few practical limits:
+The current version is intentionally simple and has a few constraints:
 
-- Session state is kept in memory, so it does not persist across browser restarts.
-- Large browsing sessions can make the graph more expensive to render.
-- The URL matching logic is mostly exact with a small amount of protocol normalization.
-- Internal browser pages are intentionally filtered out in most cases.
+- Session data is in memory, so it resets when the extension reloads or the browser restarts.
+- Large sessions can make the graph heavier to render.
+- URL matching is practical but not fully canonicalized.
+- Internal browser pages are mostly filtered out.
 
-## Summary
+## Closing Summary
 
-WebWeave is a browser extension that turns browsing activity into an analyzable session graph. It is both a working visualization tool and a teaching project that demonstrates linked lists, stacks, tries, caching, BFS, and DFS in a real UI.
+WebWeave is a browser-session visualization tool built around core DSA ideas. It tracks tabs, captures link clicks, records navigation as graph data, and lets the user search and highlight paths through the browsing history. For presentation, the most important message is that the project turns an ordinary browser session into a live graph that is both interactive and algorithmically meaningful.
