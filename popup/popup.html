@@ -4,18 +4,25 @@
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>WebWeave</title>
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Host+Grotesk:wght@700;800&display=swap"
+			rel="stylesheet"
+		/>
 		<link rel="stylesheet" href="popup.css" />
 	</head>
 	<body>
 		<main class="shell">
 			<header class="topbar">
-				<div>
-					<h1>WebWeave</h1>
+				<div class="brand-block">
+	
+					<h1 class="brand" aria-label="webweave"><span class="brand-web">web</span><span class="brand-weave">weave</span></h1>
 					<p>Open full dashboard for large graph view</p>
-				</div>
-				<div class="controls">
-					<button id="startSession">Start Session</button>
-					<button id="stopSession" class="ghost">Stop</button>
+					<div class="controls">
+						<button id="startSession">Start Session</button>
+						<button id="stopSession" class="ghost">End Session</button>
+					</div>
 				</div>
 			</header>
 

@@ -1,11 +1,12 @@
 :root {
-  --bg: #f2f6f0;
+  --bg: #f7f7f7;
   --panel: #ffffff;
-  --ink: #17201b;
-  --muted: #627068;
-  --accent: #127a5c;
-  --accent2: #d25a3e;
-  --line: #d9e2da;
+  --ink: #111111;
+  --muted: #666666;
+  --accent: #111111;
+  --accent2: #333333;
+  --line: #d8d8d8;
+  --brand-weave: #8f8f8f;
 }
 
 * {
@@ -15,10 +16,8 @@
 body {
   margin: 0;
   color: var(--ink);
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  background: radial-gradient(circle at 10% -10%, #e5f8ef, transparent 35%),
-    radial-gradient(circle at 90% 110%, #ffece5, transparent 35%),
-    var(--bg);
+  font-family: "Host Grotesk", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background: var(--bg);
 }
 
 .page {
@@ -34,9 +33,44 @@ body {
   gap: 16px;
 }
 
+.brand-block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.logo-placeholder {
+  width: 180px;
+  height: 52px;
+  border: 1px dashed var(--line);
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  background: #ffffff;
+  font-size: 13px;
+}
+
+.brand {
+  margin: 0;
+  font-size: 56px;
+  line-height: 0.95;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  text-transform: lowercase;
+}
+
+.brand-web {
+  color: #000000;
+}
+
+.brand-weave {
+  color: var(--brand-weave);
+}
+
 .hero h1 {
   margin: 0;
-  font-size: 34px;
 }
 
 .hero p {
@@ -56,11 +90,11 @@ button {
   cursor: pointer;
   font-weight: 700;
   background: var(--accent);
-  color: #fff;
+  color: #ffffff;
 }
 
 button.ghost {
-  background: #e8efea;
+  background: #efefef;
   color: var(--ink);
 }
 
@@ -115,6 +149,27 @@ input {
   padding: 10px;
 }
 
+<<<<<<< HEAD
+=======
+#suggestions {
+  margin: 2px 0 0;
+  padding-left: 18px;
+  max-height: 86px;
+  overflow-y: auto;
+  color: var(--muted);
+}
+
+.suggestion-item {
+  background: transparent;
+  color: var(--ink);
+  border: none;
+  padding: 2px 0;
+  text-align: left;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+>>>>>>> fdeda398b83e9013114ac277f80a9e0b1757ed58
 .helper {
   margin: 8px 0 0;
   color: var(--muted);

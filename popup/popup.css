@@ -1,11 +1,12 @@
 :root {
-	--bg: #f6f8f2;
+	--bg: #f7f7f7;
 	--panel: #ffffff;
-	--ink: #1a1f1c;
-	--muted: #6d756f;
-	--accent: #0f8a5f;
-	--accent-2: #d85b3f;
-	--line: #dbe3dc;
+	--ink: #111111;
+	--muted: #666666;
+	--accent: #111111;
+	--accent-2: #333333;
+	--line: #d8d8d8;
+	--brand-weave: #8f8f8f;
 }
 
 * {
@@ -14,11 +15,9 @@
 
 body {
 	margin: 0;
-	font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+	font-family: "Host Grotesk", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 	color: var(--ink);
-	background: radial-gradient(circle at 10% 0%, #e6f6ef, transparent 40%),
-		radial-gradient(circle at 90% 100%, #fde9e2, transparent 40%),
-		var(--bg);
+	background: var(--bg);
 }
 
 .shell {
@@ -29,14 +28,45 @@ body {
 
 .topbar {
 	display: flex;
-	justify-content: space-between;
-	align-items: center;
+	align-items: flex-start;
 	gap: 12px;
 }
 
-h1 {
+
+.brand-block {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.logo-placeholder {
+	width: 150px;
+	height: 40px;
+	border: 1px dashed var(--line);
+	border-radius: 8px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	background: #ffffff;
+	font-size: 11px;
+	color: var(--muted);
+}
+
+.brand {
 	margin: 0;
-	font-size: 28px;
+	font-size: 46px;
+	line-height: 0.95;
+	font-weight: 800;
+	letter-spacing: -0.02em;
+	text-transform: lowercase;
+}
+
+.brand-web {
+	color: #000000;
+}
+
+.brand-weave {
+	color: var(--brand-weave);
 }
 
 .topbar p {
@@ -47,20 +77,21 @@ h1 {
 .controls {
 	display: flex;
 	gap: 8px;
+	margin-top: 4px;
 }
 
 button {
 	border: none;
 	border-radius: 10px;
 	padding: 10px 12px;
-	font-weight: 600;
+	font-weight: 700;
 	cursor: pointer;
 	background: var(--accent);
 	color: #fff;
 }
 
 button.ghost {
-	background: #edf2ee;
+	background: #efefef;
 	color: var(--ink);
 }
 
